@@ -19,7 +19,7 @@ func New(logger logger.Logger) *cache {
 	return &cache{
 		mu:     sync.RWMutex{},
 		items:  make(map[string][]byte),
-		logger: logger,
+		logger: logger.Named("cache"),
 	}
 }
 

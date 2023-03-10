@@ -7,8 +7,8 @@ import (
 	"github.com/andrsj/feedback-service/internal/delivery/http/handlers"
 	"github.com/andrsj/feedback-service/internal/delivery/http/router"
 	"github.com/andrsj/feedback-service/internal/delivery/http/server"
+	"github.com/andrsj/feedback-service/internal/infrastructure/cache/memory"
 	"github.com/andrsj/feedback-service/pkg/logger"
-
 )
 
 type App struct {
@@ -21,7 +21,9 @@ func New(logger logger.Logger) (*App, error) {
 
 	handlers := handlers.New(logger)
 
-	router := router.New(logger)
+	cache := memory.New(logger)
+
+	router := router.New(cache, logger)
 	router.Register(handlers)
 	
 	server := server.New(router)

@@ -27,15 +27,16 @@ var (
 //nolint 
 var feedbacks = Feedbacks{
 	{
-		ID:      uuid.NewString(),
+		ID:      generateID(),
 		Message: "Example feedback 1",
 	},
 	{
-		ID:      uuid.NewString(),
+		ID:      generateID(),
 		Message: "Example feedback 2",
 	},
 }
 
+// GetFeedback GET /feedback/{id}.
 func (h *handlers) GetFeedback(w http.ResponseWriter, r *http.Request) {
 	feedbackID := chi.URLParam(r, "id")
 	if feedbackID == "" {
@@ -75,6 +76,7 @@ func (h *handlers) GetFeedback(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetAllFeedback GET /feedbacks.
 func (h *handlers) GetAllFeedback(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -89,6 +91,7 @@ func (h *handlers) GetAllFeedback(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+// CreateFeedback POST /feedback.
 func (h *handlers) CreateFeedback(w http.ResponseWriter, r *http.Request) {
 	var feedback Feedback
 
@@ -101,12 +104,14 @@ func (h *handlers) CreateFeedback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	feedback.ID = generateID()
+
 	feedbacks = append(feedbacks, &feedback)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	err = json.NewEncoder(w).Encode(feedback)
+	err = json.NewEncoder(w).Encode(map[string]string{"id": feedback.ID})
 	if err != nil {
 		err = errJSONcoding
 		h.logger.Error(err.Error(), logger.M{"err": err})
@@ -114,4 +119,8 @@ func (h *handlers) CreateFeedback(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+}
+
+func generateID() string {
+	return uuid.NewString()
 }
