@@ -36,12 +36,12 @@ func New(cache cache.Cache, logger logger.Logger) *Router {
 }
 
 func (r *Router) Register(handler handlers.Handlers) {
-	r.logger.Info("Registring handlers", nil)
+	r.logger.Info("Registering handlers", nil)
 	r.router.Get("/", handler.Status)
 
 	r.router.Group(
 		func(router chi.Router) {
-			router.Use(r.cacheMiddleware)
+			// router.Use(r.cacheMiddleware)
 			router.Get("/feedbacks", handler.GetAllFeedback)
 			router.Get("/feedback/{id}", handler.GetFeedback)
 		},

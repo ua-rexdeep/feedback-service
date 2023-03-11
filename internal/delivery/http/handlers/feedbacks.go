@@ -5,36 +5,14 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/andrsj/feedback-service/internal/domain/models"
 	"github.com/andrsj/feedback-service/pkg/logger"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 )
-
-type Feedback struct {
-	ID      string `json:"id"`
-	Message string `json:"message"`
-}
-
-type Feedbacks []*Feedback
 
 var (
-	errJSONcoding = errors.New("json en/de-coding error")
 	errIDParamIsMissing  = errors.New("id parameter is missing")
-	errIDIsMissing  = errors.New("id is missing")
 )
-
-// TODO: DELETE THIS SHIT!
-//nolint 
-var feedbacks = Feedbacks{
-	{
-		ID:      generateID(),
-		Message: "Example feedback 1",
-	},
-	{
-		ID:      generateID(),
-		Message: "Example feedback 2",
-	},
-}
 
 // GetFeedback GET /feedback/{id}.
 func (h *handlers) GetFeedback(w http.ResponseWriter, r *http.Request) {
@@ -47,16 +25,8 @@ func (h *handlers) GetFeedback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var feedback *Feedback
-
-	for k, v := range feedbacks {
-		if v.ID == feedbackID {
-			feedback = feedbacks[k]
-		}
-	}
-
-	if feedback == nil {
-		err := errIDIsMissing
+	feedback, err := h.feedbackService.GetByID(feedbackID)
+	if err != nil {
 		h.logger.Error(err.Error(), logger.M{"err": err})
 		http.Error(w, err.Error(), http.StatusNotFound)
 
@@ -66,9 +36,8 @@ func (h *handlers) GetFeedback(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	
-	err := json.NewEncoder(w).Encode(feedback)
+	err = json.NewEncoder(w).Encode(feedback)
 	if err != nil {
-		err = errJSONcoding
 		h.logger.Error(err.Error(), logger.M{"err": err})
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -81,39 +50,18 @@ func (h *handlers) GetAllFeedback(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	err := json.NewEncoder(w).Encode(feedbacks)
+	feedbacks, err := h.feedbackService.GetAll()
 	if err != nil {
-		err = errJSONcoding
-		h.logger.Error(err.Error(), logger.M{"err": err})
-		http.Error(w, errJSONcoding.Error(), http.StatusInternalServerError)
-
-		return
-	}
-}
-
-// CreateFeedback POST /feedback.
-func (h *handlers) CreateFeedback(w http.ResponseWriter, r *http.Request) {
-	var feedback Feedback
-
-	err := json.NewDecoder(r.Body).Decode(&feedback)
-	if err != nil {
-		err = errJSONcoding
+		// TODO Format error
 		h.logger.Error(err.Error(), logger.M{"err": err})
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
-		return
+		return 
 	}
 
-	feedback.ID = generateID()
 
-	feedbacks = append(feedbacks, &feedback)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	err = json.NewEncoder(w).Encode(map[string]string{"id": feedback.ID})
+	err = json.NewEncoder(w).Encode(feedbacks)
 	if err != nil {
-		err = errJSONcoding
 		h.logger.Error(err.Error(), logger.M{"err": err})
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -121,6 +69,35 @@ func (h *handlers) CreateFeedback(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func generateID() string {
-	return uuid.NewString()
+// CreateFeedback POST /feedback.
+func (h *handlers) CreateFeedback(w http.ResponseWriter, r *http.Request) {
+	var feedback models.FeedbackInput
+
+	err := json.NewDecoder(r.Body).Decode(&feedback)
+	if err != nil {
+		h.logger.Error(err.Error(), logger.M{"err": err})
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+
+	feedbackID, err := h.feedbackService.Create(&feedback)
+	if err != nil {
+		// TODO check the error
+		h.logger.Error(err.Error(), logger.M{"err": err})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	err = json.NewEncoder(w).Encode(map[string]string{"id": feedbackID})
+	if err != nil {
+		h.logger.Error(err.Error(), logger.M{"err": err})
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
 }

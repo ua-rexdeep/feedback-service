@@ -10,6 +10,7 @@ import (
 )
 
 func New() *zapLogger {
+	//nolint
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:        "time",
 		LevelKey:       "level",
@@ -69,9 +70,11 @@ func (l *zapLogger) Fatal(message string, args logger.M) {
 func toFields(args logger.M) []zap.Field {
 	fields := make([]zap.Field, len(args))
 	i := 0
+
 	for k, v := range args {
 		fields[i] = zap.Any(k, v)
 		i++
 	}
+
 	return fields
 }
