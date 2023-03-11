@@ -29,7 +29,7 @@ func New(logger logger.Logger) *inMemoryFeedbackRepository {
 }
 
 func (r *inMemoryFeedbackRepository) Create(feedback *models.FeedbackInput) (string, error) {
-	feedbackID := uuid.NewString()
+	feedbackID := uuid.New()
 
 	r.logger.Info("Creating feedback", logger.M{"feedbackID": feedbackID})
 
@@ -45,21 +45,21 @@ func (r *inMemoryFeedbackRepository) Create(feedback *models.FeedbackInput) (str
 
 	r.mu.Lock()
 	r.logger.Info("Saving feedback", logger.M{"feedbackID": feedbackID})
-	r.feedbacks[feedbackID] = feedbackOutput
+	r.feedbacks[feedbackID.String()] = feedbackOutput
 	r.mu.Unlock()
 	
 	r.logger.Info("Returning feedbackID for successfully saved feedback", logger.M{"feedbackID": feedbackID})
 	
-	return feedbackID, nil
+	return feedbackID.String(), nil
 }
 
-func (r *inMemoryFeedbackRepository) GetByID(feedbackID string) (*models.Feedback, error) {
+func (r *inMemoryFeedbackRepository) GetByID(feedbackID uuid.UUID) (*models.Feedback, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	r.logger.Info("Getting feedback from map", logger.M{"feedbackID": feedbackID})
 
-	feedbackOutput, ok := r.feedbacks[feedbackID]
+	feedbackOutput, ok := r.feedbacks[feedbackID.String()]
 	if !ok {
 		r.logger.Error("Feedback not found for ID", logger.M{"feedbackID": feedbackID})
 

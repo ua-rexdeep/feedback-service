@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type FeedbackInput struct {
 	CustomerName string `json:"customer_name"` //nolint:tagliatelle
@@ -10,7 +14,7 @@ type FeedbackInput struct {
 }
 
 type Feedback struct {
-	ID           string    `json:"id" gorm:"primaryKey"`
+	ID           uuid.UUID    `json:"id" gorm:"type:uuid;primaryKey"`
 	CustomerName string    `json:"customer_name"` //nolint:tagliatelle
 	Email        string    `json:"email"`
 	FeedbackText string    `json:"feedback_text"` //nolint:tagliatelle
